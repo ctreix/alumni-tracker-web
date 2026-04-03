@@ -1,75 +1,69 @@
-from flask import Flask, render_template, request
-import difflib
+from flask import Flask, render_template, request, redirect, url_for, session
+import csv
+import os
 
 app = Flask(__name__)
+app.secret_key = 'rahasia_admin_kampus_123'
 
-# Data Master (Sistem mengambil data alumni dari master)
-MASTER_ALUMNI = [
-    {"id": 1, "nama_asli": "Muhammad Rizky", "prodi": "Informatika", "tahun_lulus": 2020, "status": "Belum Dilacak", "info": "-"},
-    {"id": 2, "nama_asli": "Siti Aminah", "prodi": "Ilmu Komunikasi", "tahun_lulus": 2019, "status": "Belum Dilacak", "info": "-"},
-    {"id": 3, "nama_asli": "Budi Santoso", "prodi": "Teknik Mesin", "tahun_lulus": 2021, "status": "Belum Dilacak", "info": "-"}
-]
+ADMIN_USERNAME = 'admin_kampus'
+ADMIN_PASSWORD = 'password123'
 
-# Simulasi Hasil Pencarian dari Web (LinkedIn, Scholar, dll)
-MOCK_WEB_RESULTS = [
-    {"nama": "M. Rizky", "afiliasi": "UMM", "role": "Software Engineer", "tahun": 2022, "sumber": "LinkedIn"},
-    {"nama": "Muhammad Rizky", "afiliasi": "Universitas Brawijaya", "role": "Dosen", "tahun": 2021, "sumber": "Google Scholar"},
-    {"nama": "Siti Aminah", "afiliasi": "Universitas Muhammadiyah Malang", "role": "Jurnalis", "tahun": 2021, "sumber": "LinkedIn"}
-]
+MASTER_ALUMNI = []
 
-# Fungsi Disambiguasi dan Scoring
-def hitung_kemiripan(alumnus, kandidat):
-    score = 0.0
-    
-    # 1. Kecocokan Nama (Bobot maks 0.4)
-    kemiripan_nama = difflib.SequenceMatcher(None, alumnus["nama_asli"].lower(), kandidat["nama"].lower()).ratio()
-    if kemiripan_nama > 0.8:
-        score += 0.4
-    elif kemiripan_nama > 0.5:
-        score += 0.2
-        
-    # 2. Kecocokan Afiliasi / Konteks (Bobot 0.3)
-    afiliasi_kandidat = kandidat["afiliasi"].lower()
-    if "umm" in afiliasi_kandidat or "muhammadiyah malang" in afiliasi_kandidat:
-        score += 0.3
-        
-    # 3. Kecocokan Timeline (Bobot 0.3)
-    if kandidat["tahun"] >= alumnus["tahun_lulus"]:
-        score += 0.3
-        
-    return score
+def load_csv_data():
+    file_path = 'Alumni_2000-2025.csv'
+    if os.path.exists(file_path):
+        with open(file_path, mode='r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for idx, row in enumerate(reader):
+                MASTER_ALUMNI.append({
+                    "id": idx + 1,
+                    "nama": row.get('Nama Lulusan', '').strip(),
+                    "nim": row.get('NIM', ''),
+                    "prodi": row.get('Program Studi', ''),
+                    "tahun_lulus": row.get('Tanggal Lulus', ''),
+                    "sosmed": "LinkedIn: link.id/in, IG: @user, FB: user.fb, TikTok: @user",
+                    "email": f"{row.get('NIM', 'user')}@student.mail.ac.id",
+                    "no_hp": "0812-xxxx-xxxx",
+                    "tempat_kerja": "PT. Contoh Perusahaan",
+                    "alamat_kerja": "Jl. Contoh No. 1, Malang",
+                    "posisi": "Staff Placeholder",
+                    "kategori_pekerjaan": "Swasta",
+                    "sosmed_kantor": "@akun_kantor"
+                })
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
+load_csv_data()
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
     if request.method == 'POST':
-        target_id = int(request.form.get('alumni_id'))
-        
-        # Cari data alumni berdasarkan ID
-        alumnus = next((al for al in MASTER_ALUMNI if al['id'] == target_id), None)
-        
-        if alumnus:
-            best_candidate = None
-            highest_score = 0
-            
-            # Melakukan pengecekan ke hasil pencarian
-            for kandidat in MOCK_WEB_RESULTS:
-                skor = hitung_kemiripan(alumnus, kandidat)
-                if skor > highest_score:
-                    highest_score = skor
-                    best_candidate = kandidat
-            
-            # Menetapkan Status Alumni Berdasarkan Temuan
-            if highest_score >= 0.7:
-                alumnus['status'] = f"Teridentifikasi"
-                alumnus['info'] = f"Confidence: {highest_score*100:.0f}% | {best_candidate['role']} di {best_candidate['sumber']}"
-            elif highest_score >= 0.4:
-                alumnus['status'] = f"Perlu Verifikasi Manual"
-                alumnus['info'] = f"Skor meragukan ({highest_score*100:.0f}%). Cek: {best_candidate['nama']} ({best_candidate['afiliasi']})"
-            else:
-                alumnus['status'] = "Tidak Ditemukan"
-                alumnus['info'] = "Tidak ada kecocokan di sumber publik."
+        if request.form['username'] == ADMIN_USERNAME and request.form['password'] == ADMIN_PASSWORD:
+            session['logged_in'] = True
+            return redirect(url_for('index'))
+        error = 'Kredensial salah!'
+    return render_template('login.html', error=error)
 
-    return render_template('index.html', alumni_data=MASTER_ALUMNI)
+@app.route('/', methods=['GET'])
+def index():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    
+    search_query = request.args.get('q', '').lower()
+    results = []
+    
+    if search_query:
+        results = [
+            a for a in MASTER_ALUMNI 
+            if search_query in a['nama'].lower() or search_query in a['nim']
+        ]
+        
+    return render_template('index.html', alumni=results, query=search_query)
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(debug=True)

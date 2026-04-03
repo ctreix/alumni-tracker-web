@@ -2,72 +2,63 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Pelacakan Alumni (Alumni Tracker)</title>
+    <title>Sistem Pelacakan Alumni - Admin</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h2 { color: #333; text-align: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #0056b3; color: white; }
-        tr:hover { background-color: #f1f1f1; }
-        .btn { background-color: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
-        .btn:hover { background-color: #218838; }
-        .badge-success { background-color: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
-        .badge-warning { background-color: #ffc107; color: black; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
-        .badge-danger { background-color: #dc3545; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
-        .badge-default { background-color: #6c757d; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
+        .top-bar { display: flex; justify-content: flex-end; padding: 10px 20px; }
+        .btn-logout { background: #dc3545; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; }
+        .container { max-width: 1200px; margin: 0 auto 40px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .search-section { text-align: center; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+        input[type="text"] { width: 60%; padding: 12px; border: 2px solid #0056b3; border-radius: 6px; font-size: 16px; }
+        .btn-search { padding: 12px 25px; background: #0056b3; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+        .data-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-left: 5px solid #28a745; background: #fff; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px; }
+        .label { font-weight: bold; color: #555; }
+        .no-data { text-align: center; color: #888; padding: 40px; font-size: 18px; }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <h2>Dashboard Pelacakan Alumni Publik</h2>
-    <p>Sistem ini menyimulasikan pencarian otomatis, ekstraksi sinyal identitas, dan disambiguasi kandidat dari berbagai platform publik (LinkedIn, Scholar, dll).</p>
+    <div class="top-bar">
+        <a href="/logout" class="btn-logout">Logout</a>
+    </div>
     
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Profil Target</th>
-                <th>Program Studi</th>
-                <th>Tahun Lulus</th>
-                <th>Status Pelacakan</th>
-                <th>Sinyal / Info Terbaru</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for al in alumni_data %}
-            <tr>
-                <td>{{ al.id }}</td>
-                <td><strong>{{ al.nama_asli }}</strong></td>
-                <td>{{ al.prodi }}</td>
-                <td>{{ al.tahun_lulus }}</td>
-                <td>
-                    {% if al.status == "Teridentifikasi" %}
-                        <span class="badge-success">{{ al.status }}</span>
-                    {% elif al.status == "Perlu Verifikasi Manual" %}
-                        <span class="badge-warning">{{ al.status }}</span>
-                    {% elif al.status == "Tidak Ditemukan" %}
-                        <span class="badge-danger">{{ al.status }}</span>
-                    {% else %}
-                        <span class="badge-default">{{ al.status }}</span>
-                    {% endif %}
-                </td>
-                <td><small>{{ al.info }}</small></td>
-                <td>
-                    <form method="POST" style="margin: 0;">
-                        <input type="hidden" name="alumni_id" value="{{ al.id }}">
-                        <button type="submit" class="btn">Lacak Sekarang</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+    <div class="container">
+        <div class="search-section">
+            <h2>Data Alumni</h2>
+            <form action="/" method="GET">
+                <input type="text" name="q" placeholder="Cari Nama atau NIM..." value="{{ query }}">
+                <button type="submit" class="btn-search">Cari Data</button>
+            </form>
+        </div>
 
+        {% if query %}
+            {% if alumni %}
+                <h3>Hasil Pencarian untuk "{{ query }}":</h3>
+                {% for a in alumni %}
+                <div class="data-card">
+                    <h4>{{ a.nama }} ({{ a.nim }})</h4>
+                        <div class="grid">
+                        <div><span class="label">Prodi:</span> {{ a.prodi }}</div>
+                        <div><span class="label">Tahun Lulus:</span> {{ a.tahun_lulus }}</div>
+                        <div><span class="label">Email:</span> {{ a.email }}</div>
+                        <div><span class="label">No. HP:</span> {{ a.no_hp }}</div>
+                        <div><span class="label">Sosmed:</span> {{ a.sosmed }}</div>
+                        <div><span class="label">Status Kerja:</span> {{ a.kategori_pekerjaan }}</div>
+                        <div><span class="label">Tempat Kerja:</span> {{ a.tempat_kerja }}</div>
+                        <div><span class="label">Posisi:</span> {{ a.posisi }}</div>
+                        <div><span class="label">Alamat Kantor:</span> {{ a.alamat_kerja }}</div>
+                        <div><span class="label">Sosmed Kantor:</span> {{ a.sosmed_kantor }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-data">Data tidak ditemukan untuk "{{ query }}".</div>
+            {% endif %}
+        {% else %}
+            <div class="no-data">
+                Gunakan kotak pencarian di atas untuk mencari data alumni.
+            </div>
+        {% endif %}
+    </div>
 </body>
 </html>
