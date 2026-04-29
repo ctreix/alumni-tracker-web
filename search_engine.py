@@ -40,23 +40,20 @@ class SerperSearchEngine:
             queries.append(f'site:linkedin.com/in "{nama}" "{prodi}"')
             queries.append(f'"{nama}" "Universitas Muhammadiyah Malang" OR "UMM" linkedin')
         
-        # === INSTAGRAM QUERIES ===
+        # === INSTAGRAM QUERIES (Profile only: instagram.com/username) ===
         if platform in ['all', 'instagram']:
-            queries.append(f'site:instagram.com "{nama}" UMM')
-            queries.append(f'site:instagram.com "{nama}" "{prodi}"')
-            queries.append(f'"{nama}" instagram UMM alumni')
+            queries.append(f'site:instagram.com "{nama}" "Universitas Muhammadiyah Malang" OR "UMM"')
+            queries.append(f'"{nama}" site:instagram.com inurl:/ alumni UMM')
         
-        # === FACEBOOK QUERIES ===
+        # === FACEBOOK QUERIES (Profile only: facebook.com/username) ===
         if platform in ['all', 'facebook']:
-            queries.append(f'site:facebook.com "{nama}" "Universitas Muhammadiyah Malang"')
-            queries.append(f'site:facebook.com "{nama}" UMM')
-            queries.append(f'site:fb.com "{nama}" alumni UMM')
+            queries.append(f'site:facebook.com "{nama}" "Universitas Muhammadiyah Malang" UMM alumni')
+            queries.append(f'site:facebook.com "{nama}" UMM "{prodi}"')
         
-        # === TWITTER/X QUERIES ===
+        # === TWITTER/X QUERIES (Profile only: twitter.com/username or x.com/username) ===
         if platform in ['all', 'twitter']:
-            queries.append(f'site:twitter.com OR site:x.com "{nama}" UMM')
-            queries.append(f'site:twitter.com "{nama}" "{prodi}"')
-            queries.append(f'"{nama}" twitter alumni Muhammadiyah Malang')
+            queries.append(f'site:twitter.com OR site:x.com "{nama}" "Universitas Muhammadiyah Malang" alumni')
+            queries.append(f'inurl:twitter.com "{nama}" UMM "{prodi}"')
         
         # === TIKTOK QUERIES ===
         if platform in ['all', 'tiktok']:

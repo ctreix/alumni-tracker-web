@@ -225,6 +225,9 @@ class AlumniScorer:
                 analysis['details'].append('Phone number detected in snippet (+5)')
                 break
         
+        # Cap score at 100 maximum
+        score = min(score, 100)
+        
         return score, analysis
     
     def _extract_prodi_keywords(self, prodi: str) -> List[str]:
@@ -312,33 +315,44 @@ class AlumniScorer:
         title = result.get('title', '')
         snippet = result.get('snippet', '')
         
-        # === EXTRACT SOCIAL MEDIA LINKS ===
+        # === EXTRACT SOCIAL MEDIA LINKS (Profile pages only, not posts) ===
         if 'linkedin.com' in link.lower():
-            profile['linkedin'] = link
-            # Extract from LinkedIn
-            profile.update(self._extract_linkedin_data(title, snippet))
+            # LinkedIn profile: linkedin.com/in/username
+            if '/in/' in link.lower():
+                profile['linkedin'] = link
+                profile.update(self._extract_linkedin_data(title, snippet))
             
         elif 'instagram.com' in link.lower():
-            profile['instagram'] = link
+            # Instagram profile: instagram.com/username (not /p/ for posts)
+            if '/p/' not in link.lower() and '/reel/' not in link.lower() and '/stories/' not in link.lower():
+                profile['instagram'] = link
             
         elif 'facebook.com' in link.lower() or 'fb.com' in link.lower():
-            profile['facebook'] = link
+            # Facebook profile: facebook.com/username or /profile.php (not /posts/, /photos/)
+            if '/posts/' not in link.lower() and '/photos/' not in link.lower() and '/videos/' not in link.lower():
+                profile['facebook'] = link
             
         elif 'twitter.com' in link.lower() or 'x.com' in link.lower():
-            profile['twitter_x'] = link
+            # Twitter/X profile: twitter.com/username (not /status/ for tweets)
+            if '/status/' not in link.lower():
+                profile['twitter_x'] = link
             
         elif 'tiktok.com' in link.lower():
-            profile['tiktok'] = link
+            # TikTok profile: tiktok.com/@username (not /video/)
+            if '/video/' not in link.lower() and '/@' in link.lower():
+                profile['tiktok'] = link
             
         elif 'about.me' in link.lower():
             profile['website_personal'] = link
-            # About.me often has contact info
             profile.update(self._extract_contact_from_snippet(snippet))
             
         elif 'github.com' in link.lower():
-            profile['website_personal'] = link
-            if not profile['kategori']:
-                profile['kategori'] = 'Teknik/Teknologi'
+            # GitHub profile: github.com/username (not /issues/, /pull/)
+            parts = link.rstrip('/').split('/')
+            if len(parts) >= 4 and parts[3] not in ['issues', 'pull', 'discussions', 'settings']:
+                profile['website_personal'] = link
+                if not profile['kategori']:
+                    profile['kategori'] = 'Teknik/Teknologi'
         
         # === EXTRACT CONTACT INFO FROM SNIPPET ===
         contact_data = self._extract_contact_from_snippet(snippet)
