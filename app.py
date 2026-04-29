@@ -475,7 +475,10 @@ def health_check():
     })
 
 
+# Initialize services and database
+# This runs both in development (python app.py) and production (WSGI/gunicorn)
+init_services()
+init_db()
+
 if __name__ == '__main__':
-    init_services()
-    init_db()
     app.run(debug=True)
