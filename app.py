@@ -55,16 +55,27 @@ def init_services():
         api_key = os.environ.get('SERPER_API_KEY')
         print(f"[DEBUG] SERPER_API_KEY present: {bool(api_key)}")
         print(f"[DEBUG] SERPER_API_KEY length: {len(api_key) if api_key else 0}")
+        print(f"[DEBUG] First 10 chars of API key: {api_key[:10] if api_key else 'None'}...")
         
         if api_key:
             search_engine = SerperSearchEngine(api_key=api_key)
             scorer = AlumniScorer()
-            print("[OK] Search engine and scorer initialized")
+            print("[OK] Search engine and scorer initialized successfully")
+            
+            # Test the API key with a simple request
+            try:
+                test_result = search_engine.search_alumni("test", "test", max_results=1)
+                print(f"[OK] Serper API test successful: {len(test_result.get('search_results', []))} platforms")
+            except Exception as test_e:
+                print(f"[WARNING] Serper API test failed: {test_e}")
+                print(f"[WARNING] API key may be invalid or expired")
         else:
             print("[WARNING] SERPER_API_KEY not set. Search functionality disabled.")
             print(f"[DEBUG] Available env vars: {[k for k in os.environ.keys() if not k.startswith('_')][:10]}")
     except Exception as e:
         print(f"[ERROR] Failed to initialize services: {e}")
+        import traceback
+        print(f"[ERROR] Traceback: {traceback.format_exc()}")
 
 
 def login_required(f):
