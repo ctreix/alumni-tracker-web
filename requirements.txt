@@ -1,2 +1,9 @@
 Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+flask-session==0.5.0
 gunicorn==21.2.0
+pandas==2.2.3
+requests==2.31.0
+thefuzz==0.22.1
+rapidfuzz>=3.9.0,<4.0.0
+python-dotenv==1.0.0

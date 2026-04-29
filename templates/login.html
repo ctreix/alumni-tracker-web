@@ -2,27 +2,102 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Login Sistem Pelacakan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Automated Alumni Profiler</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 300px; text-align: center; }
-        input[type="text"], input[type="password"] { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 100%; padding: 10px; background-color: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .error { color: red; font-size: 12px; }
+        body {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 3rem;
+            width: 100%;
+            max-width: 420px;
+        }
+        .login-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+        .login-icon i {
+            font-size: 2.5rem;
+            color: white;
+        }
+        .form-control {
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+        }
+        .btn-login {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            border: none;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .btn-login:hover {
+            opacity: 0.9;
+        }
+        .feature-badges {
+            margin-top: 1.5rem;
+        }
+        .feature-badges .badge {
+            margin: 0.25rem;
+        }
     </style>
 </head>
 <body>
-    <div class="login-box">
-        <h2>Login Admin</h2>
-        <p>Sistem Pelacakan Alumni (Protected)</p>
+    <div class="login-card">
+        <div class="login-icon">
+            <i class="bi bi-mortarboard-fill"></i>
+        </div>
+        <h3 class="text-center fw-bold mb-2">Automated Alumni Profiler</h3>
+        <p class="text-center text-muted mb-4">Sistem Tracer Study Berbasis AI</p>
+        
         {% if error %}
-            <p class="error">{{ error }}</p>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
         {% endif %}
-        <form method="POST">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
+        
+        <form method="POST" action="/login">
+            <div class="mb-3">
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                    <input type="text" name="username" class="form-control" placeholder="Username" required autocomplete="off">
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+                    <input type="password" name="password" class="form-control" placeholder="Password" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-login w-100">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Login
+            </button>
         </form>
+        
+        <div class="feature-badges text-center">
+            <span class="badge bg-primary">Serper.dev API</span>
+            <span class="badge bg-success">Fuzzy Matching</span>
+            <span class="badge bg-info text-dark">Confidence Scoring</span>
+        </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -2,63 +2,658 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Sistem Pelacakan Alumni - Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Alumni Profiler - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
-        .top-bar { display: flex; justify-content: flex-end; padding: 10px 20px; }
-        .btn-logout { background: #dc3545; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; }
-        .container { max-width: 1200px; margin: 0 auto 40px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .search-section { text-align: center; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
-        input[type="text"] { width: 60%; padding: 12px; border: 2px solid #0056b3; border-radius: 6px; font-size: 16px; }
-        .btn-search { padding: 12px 25px; background: #0056b3; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
-        .data-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-left: 5px solid #28a745; background: #fff; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px; }
-        .label { font-weight: bold; color: #555; }
-        .no-data { text-align: center; color: #888; padding: 40px; font-size: 18px; }
+        :root {
+            --primary-color: #1e3a8a;
+            --secondary-color: #3b82f6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+        }
+        body {
+            background-color: #f8fafc;
+        }
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+        .stats-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        .stats-card:hover {
+            transform: translateY(-2px);
+        }
+        .alumni-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            margin-bottom: 1rem;
+        }
+        .alumni-card .card-header {
+            background: #fff;
+            border-bottom: 2px solid #e2e8f0;
+            border-radius: 12px 12px 0 0;
+        }
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .status-belum { background: #e2e8f0; color: #64748b; }
+        .status-kuat { background: #d1fae5; color: #059669; }
+        .status-verifikasi { background: #fef3c7; color: #d97706; }
+        .status-tidak { background: #fee2e2; color: #dc2626; }
+        .status-manual { background: #dbeafe; color: #2563eb; }
+        .score-badge {
+            font-size: 1.25rem;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+        .search-section {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            margin-bottom: 2rem;
+        }
+        .btn-track {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .btn-track:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .btn-review {
+            background: var(--warning-color);
+            border: none;
+            color: white;
+        }
+        .confidence-high { background: #d1fae5; color: #059669; }
+        .confidence-medium { background: #fef3c7; color: #d97706; }
+        .confidence-low { background: #fee2e2; color: #dc2626; }
+        .data-field {
+            background: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        .data-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .data-value {
+            font-weight: 500;
+            color: #1e293b;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        .empty-state-icon {
+            font-size: 4rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+        .alert-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1050;
+            max-width: 400px;
+        }
     </style>
 </head>
 <body>
-    <div class="top-bar">
-        <a href="/logout" class="btn-logout">Logout</a>
-    </div>
-    
-    <div class="container">
-        <div class="search-section">
-            <h2>Data Alumni</h2>
-            <form action="/" method="GET">
-                <input type="text" name="q" placeholder="Cari Nama atau NIM..." value="{{ query }}">
-                <button type="submit" class="btn-search">Cari Data</button>
-            </form>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-mortarboard-fill me-2"></i>
+                Automated Alumni Profiler
+            </a>
+            <div class="d-flex align-items-center gap-3">
+                {% if not search_engine_available %}
+                <span class="badge bg-warning text-dark">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    API Key Belum Diset
+                </span>
+                {% endif %}
+                <a href="/logout" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-box-arrow-right me-1"></i>Logout
+                </a>
+            </div>
         </div>
+    </nav>
 
-        {% if query %}
-            {% if alumni %}
-                <h3>Hasil Pencarian untuk "{{ query }}":</h3>
-                {% for a in alumni %}
-                <div class="data-card">
-                    <h4>{{ a.nama }} ({{ a.nim }})</h4>
-                        <div class="grid">
-                        <div><span class="label">Prodi:</span> {{ a.prodi }}</div>
-                        <div><span class="label">Tahun Lulus:</span> {{ a.tahun_lulus }}</div>
-                        <div><span class="label">Email:</span> {{ a.email }}</div>
-                        <div><span class="label">No. HP:</span> {{ a.no_hp }}</div>
-                        <div><span class="label">Sosmed:</span> {{ a.sosmed }}</div>
-                        <div><span class="label">Status Kerja:</span> {{ a.kategori_pekerjaan }}</div>
-                        <div><span class="label">Tempat Kerja:</span> {{ a.tempat_kerja }}</div>
-                        <div><span class="label">Posisi:</span> {{ a.posisi }}</div>
-                        <div><span class="label">Alamat Kantor:</span> {{ a.alamat_kerja }}</div>
-                        <div><span class="label">Sosmed Kantor:</span> {{ a.sosmed_kantor }}</div>
-                    </div>
+    <!-- Flash Messages -->
+    <div class="alert-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show shadow">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
                 {% endfor %}
-            {% else %}
-                <div class="no-data">Data tidak ditemukan untuk "{{ query }}".</div>
             {% endif %}
-        {% else %}
-            <div class="no-data">
-                Gunakan kotak pencarian di atas untuk mencari data alumni.
+        {% endwith %}
+    </div>
+
+    <div class="container-fluid py-4">
+        <!-- Stats Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card stats-card bg-white">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary bg-opacity-10 p-3 rounded">
+                                <i class="bi bi-people-fill text-primary fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Total Alumni</h6>
+                            <h4 class="mb-0 fw-bold" id="stat-total">-</h4>
+                        </div>
+                    </div>
+                </div>
             </div>
+            <div class="col-md-3">
+                <div class="card stats-card bg-white">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success bg-opacity-10 p-3 rounded">
+                                <i class="bi bi-check-circle-fill text-success fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Teridentifikasi Kuat</h6>
+                            <h4 class="mb-0 fw-bold text-success" id="stat-strong">-</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card bg-white">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-warning bg-opacity-10 p-3 rounded">
+                                <i class="bi bi-question-circle-fill text-warning fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Perlu Verifikasi</h6>
+                            <h4 class="mb-0 fw-bold text-warning" id="stat-verify">-</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card bg-white">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-info bg-opacity-10 p-3 rounded">
+                                <i class="bi bi-graph-up text-info fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Progress Tracking</h6>
+                            <h4 class="mb-0 fw-bold text-info" id="stat-rate">-%</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search & Filter Section -->
+        <div class="search-section">
+            <div class="row align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-search me-1"></i>Cari Alumni
+                    </label>
+                    <form action="/" method="GET" class="d-flex gap-2">
+                        <input type="text" name="q" class="form-control form-control-lg" 
+                               placeholder="Masukkan Nama atau NIM..." value="{{ query }}">
+                        <button type="submit" class="btn btn-primary btn-lg px-4">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </form>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-funnel me-1"></i>Filter Status
+                    </label>
+                    <form action="/" method="GET" id="filterForm">
+                        <input type="hidden" name="q" value="{{ query }}">
+                        <select name="status" class="form-select form-select-lg" onchange="document.getElementById('filterForm').submit()">
+                            <option value="">Semua Status</option>
+                            {% for status, count in status_counts %}
+                            <option value="{{ status }}" {{ 'selected' if status == status_filter else '' }}>
+                                {{ status }} ({{ count }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+                <div class="col-md-3 text-md-end">
+                    <div class="text-muted small">
+                        {% if pagination %}
+                        Menampilkan {{ (pagination.page - 1) * pagination.per_page + 1 }} - 
+                        {{ [pagination.page * pagination.per_page, pagination.total] | min }} 
+                        dari {{ pagination.total }} data
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alumni Results -->
+        {% if alumni %}
+        <div class="row">
+            {% for a in alumni %}
+            <div class="col-12">
+                <div class="card alumni-card">
+                    <div class="card-header py-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="mb-1 fw-bold">{{ a.nama_lulusan }}</h5>
+                                <div class="text-muted small">
+                                    <i class="bi bi-credit-card me-1"></i>{{ a.nim }} |
+                                    <i class="bi bi-building me-1"></i>{{ a.fakultas or '-' }} |
+                                    <i class="bi bi-book me-1"></i>{{ a.program_studi or '-' }}
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-md-center my-2 my-md-0">
+                                {% if a.status_pelacakan == 'Belum Dilacak' %}
+                                    <span class="status-badge status-belum">
+                                        <i class="bi bi-circle me-1"></i>Belum Dilacak
+                                    </span>
+                                {% elif a.status_pelacakan == 'Teridentifikasi Kuat' %}
+                                    <span class="status-badge status-kuat">
+                                        <i class="bi bi-check-circle me-1"></i>Teridentifikasi Kuat
+                                    </span>
+                                {% elif a.status_pelacakan == 'Perlu Verifikasi' %}
+                                    <span class="status-badge status-verifikasi">
+                                        <i class="bi bi-question-circle me-1"></i>Perlu Verifikasi
+                                    </span>
+                                {% elif a.status_pelacakan == 'Tidak Cocok' or a.status_pelacakan == 'Tidak Ditemukan' %}
+                                    <span class="status-badge status-tidak">
+                                        <i class="bi bi-x-circle me-1"></i>Tidak Ditemukan
+                                    </span>
+                                {% elif a.status_pelacakan == 'Terverifikasi Manual' %}
+                                    <span class="status-badge status-manual">
+                                        <i class="bi bi-person-check me-1"></i>Terverifikasi Manual
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3 text-md-end">
+                                {% if a.confidence_score > 0 %}
+                                    {% if a.confidence_score >= 75 %}
+                                    <span class="score-badge confidence-high">{{ a.confidence_score }}</span>
+                                    {% elif a.confidence_score >= 45 %}
+                                    <span class="score-badge confidence-medium">{{ a.confidence_score }}</span>
+                                    {% else %}
+                                    <span class="score-badge confidence-low">{{ a.confidence_score }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="score-badge bg-light text-muted">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <!-- Profil Data -->
+                            <div class="col-md-3">
+                                <h6 class="text-primary fw-bold mb-3">
+                                    <i class="bi bi-person-badge me-1"></i>Profil Profesional
+                                </h6>
+                                <div class="data-field">
+                                    <div class="data-label">LinkedIn</div>
+                                    <div class="data-value">
+                                        {% if a.linkedin and a.linkedin != 'Belum diisi' %}
+                                        <a href="{{ a.linkedin }}" target="_blank" class="text-decoration-none">
+                                            <i class="bi bi-linkedin text-primary"></i> View Profile
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="data-field">
+                                    <div class="data-label">Email</div>
+                                    <div class="data-value">
+                                        {% if a.email and a.email != 'Belum diisi' %}
+                                            <a href="mailto:{{ a.email }}" class="text-decoration-none">{{ a.email }}</a>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="data-field">
+                                    <div class="data-label">No. HP</div>
+                                    <div class="data-value">
+                                        {% if a.no_hp and a.no_hp != 'Belum diisi' %}
+                                            <a href="https://wa.me/{{ a.no_hp|replace('+', '')|replace('-', '')|replace(' ', '') }}" target="_blank" class="text-decoration-none">{{ a.no_hp }}</a>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Social Media -->
+                            <div class="col-md-3">
+                                <h6 class="text-danger fw-bold mb-3">
+                                    <i class="bi bi-share me-1"></i>Sosial Media
+                                </h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% if a.linkedin and a.linkedin != 'Belum diisi' %}
+                                    <a href="{{ a.linkedin }}" target="_blank" class="btn btn-sm btn-outline-primary" title="LinkedIn">
+                                        <i class="bi bi-linkedin"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if a.instagram and a.instagram != 'Belum diisi' %}
+                                    <a href="{{ a.instagram }}" target="_blank" class="btn btn-sm btn-outline-danger" title="Instagram">
+                                        <i class="bi bi-instagram"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if a.facebook and a.facebook != 'Belum diisi' %}
+                                    <a href="{{ a.facebook }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Facebook">
+                                        <i class="bi bi-facebook"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if a.twitter_x and a.twitter_x != 'Belum diisi' %}
+                                    <a href="{{ a.twitter_x }}" target="_blank" class="btn btn-sm btn-outline-dark" title="Twitter/X">
+                                        <i class="bi bi-twitter-x"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if a.tiktok and a.tiktok != 'Belum diisi' %}
+                                    <a href="{{ a.tiktok }}" target="_blank" class="btn btn-sm btn-outline-dark" title="TikTok">
+                                        <i class="bi bi-tiktok"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if a.website_personal and a.website_personal != 'Belum diisi' %}
+                                    <a href="{{ a.website_personal }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Website">
+                                        <i class="bi bi-globe"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                {% if (not a.linkedin or a.linkedin == 'Belum diisi') and (not a.instagram or a.instagram == 'Belum diisi') and (not a.facebook or a.facebook == 'Belum diisi') and (not a.twitter_x or a.twitter_x == 'Belum diisi') and (not a.tiktok or a.tiktok == 'Belum diisi') and (not a.website_personal or a.website_personal == 'Belum diisi') %}
+                                <div class="text-muted small mt-2">
+                                    <i class="bi bi-info-circle me-1"></i>Belum ada data sosmed
+                                </div>
+                                {% endif %}
+                            </div>
+                            <!-- Pekerjaan Data -->
+                            <div class="col-md-3">
+                                <h6 class="text-success fw-bold mb-3">
+                                    <i class="bi bi-briefcase me-1"></i>Data Pekerjaan
+                                </h6>
+                                <div class="data-field">
+                                    <div class="data-label">Tempat Kerja</div>
+                                    <div class="data-value">
+                                        {% if a.tempat_kerja and a.tempat_kerja != 'Belum diisi' %}
+                                            {{ a.tempat_kerja }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="data-field">
+                                    <div class="data-label">Posisi</div>
+                                    <div class="data-value">
+                                        {% if a.posisi and a.posisi != 'Belum diisi' %}
+                                            {{ a.posisi }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="data-field">
+                                    <div class="data-label">Kategori</div>
+                                    <div class="data-value">
+                                        {% if a.kategori and a.kategori != 'Belum diisi' %}
+                                        <span class="badge bg-light text-dark">{{ a.kategori }}</span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Row 2: Location & Actions -->
+                        <div class="row g-3 mt-1">
+                            <!-- Alamat Kerja -->
+                            <div class="col-md-6">
+                                <h6 class="text-info fw-bold mb-2">
+                                    <i class="bi bi-geo-alt me-1"></i>Lokasi & Sosmed Kantor
+                                </h6>
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <div class="data-field">
+                                            <div class="data-label">Alamat Kerja</div>
+                                            <div class="data-value small">{{ a.alamat_kerja if a.alamat_kerja != 'Belum diisi' else '-' }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="data-field">
+                                            <div class="data-label">Sosmed Kantor</div>
+                                            <div class="data-value small">{{ a.sosmed_kantor if a.sosmed_kantor != 'Belum diisi' else '-' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Action Buttons -->
+                            <div class="col-md-6">
+                                <h6 class="text-secondary fw-bold mb-2">
+                                    <i class="bi bi-gear me-1"></i>Aksi
+                                </h6>
+                                {% if a.status_pelacakan == 'Belum Dilacak' %}
+                                    {% if search_engine_available %}
+                                    <form action="/track/{{ a.id }}" method="POST" class="d-grid track-form" data-alumni-id="{{ a.id }}">
+                                        <button type="submit" class="btn-track btn-lg" id="track-btn-{{ a.id }}">
+                                            <i class="bi bi-search me-2"></i>
+                                            <span class="btn-text">Lacak Profil</span>
+                                            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                        </button>
+                                    </form>
+                                    <div class="mt-2 text-center">
+                                        <small class="text-muted" data-bs-toggle="tooltip" title="Mencari di: LinkedIn, Instagram, Facebook, Twitter/X, TikTok, About.me, GitHub">
+                                            <i class="bi bi-info-circle me-1"></i>7 platform
+                                        </small>
+                                    </div>
+                                    {% else %}
+                                    <div class="alert alert-warning py-2">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                        API Key belum diset
+                                    </div>
+                                    {% endif %}
+                                {% elif a.status_pelacakan == 'Perlu Verifikasi' %}
+                                    <a href="/review/{{ a.id }}" class="btn btn-review btn-lg d-grid text-white">
+                                        <i class="bi bi-eye me-2"></i>Review & Verifikasi
+                                    </a>
+                                    <div class="mt-2 text-center">
+                                        <small class="text-muted">Skor 45-74 memerlukan verifikasi manual</small>
+                                    </div>
+                                {% elif a.status_pelacakan == 'Teridentifikasi Kuat' or a.status_pelacakan == 'Terverifikasi Manual' %}
+                                    <div class="alert alert-success py-2">
+                                        <i class="bi bi-check-circle-fill me-1"></i>
+                                        Data telah diverifikasi
+                                    </div>
+                                    <a href="/review/{{ a.id }}" class="btn btn-outline-primary btn-sm d-grid mt-2">
+                                        <i class="bi bi-eye me-1"></i>Lihat Detail & Reset
+                                    </a>
+                                {% else %}
+                                    {% if search_engine_available %}
+                                    <form action="/track/{{ a.id }}" method="POST" class="d-grid track-form" data-alumni-id="{{ a.id }}">
+                                        <button type="submit" class="btn btn-outline-secondary btn-lg" id="track-btn-{{ a.id }}">
+                                            <i class="bi bi-arrow-clockwise me-2"></i>
+                                            <span class="btn-text">Coba Lagi</span>
+                                            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                        </button>
+                                    </form>
+                                    <div class="mt-2 text-center">
+                                        <small class="text-muted" data-bs-toggle="tooltip" title="Mencari di: LinkedIn, Instagram, Facebook, Twitter/X, TikTok, About.me, GitHub">
+                                            <i class="bi bi-info-circle me-1"></i>7 platform
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination and pagination.pages > 1 %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ query }}&status={{ status_filter }}&page={{ pagination.prev_num }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in pagination.iter_pages(left_edge=2, left_current=2, right_current=2, right_edge=2) %}
+                    {% if page_num %}
+                        {% if page_num == pagination.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?q={{ query }}&status={{ status_filter }}&page={{ page_num }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ query }}&status={{ status_filter }}&page={{ pagination.next_num }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="card">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="bi bi-search"></i>
+                </div>
+                {% if query %}
+                <h4 class="text-muted">Tidak ada data ditemukan</h4>
+                <p class="text-muted">Data dengan kata kunci "{{ query }}" tidak ditemukan dalam database.</p>
+                {% else %}
+                <h4 class="text-muted">Selamat Datang di Automated Alumni Profiler</h4>
+                <p class="text-muted">Masukkan Nama atau NIM pada kolom pencarian untuk melihat data alumni.</p>
+                <div class="mt-3">
+                    <span class="badge bg-primary">Serper.dev API</span>
+                    <span class="badge bg-success">Fuzzy Matching</span>
+                    <span class="badge bg-info">Confidence Scoring</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
         {% endif %}
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-dismiss alerts
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(alert => {
+                const bsAlert = bootstrap.Alert.getInstance(alert);
+                if (bsAlert) bsAlert.close();
+            });
+        }, 5000);
+
+        // Load stats from API
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                document.getElementById('stat-total').textContent = data.total_alumni.toLocaleString();
+                document.getElementById('stat-strong').textContent = data.strong_matches.toLocaleString();
+                document.getElementById('stat-verify').textContent = data.needs_verification.toLocaleString();
+                document.getElementById('stat-rate').textContent = data.tracking_rate + '%';
+            } catch (e) {
+                console.error('Failed to load stats:', e);
+            }
+        }
+        loadStats();
+
+        // Handle track form submission with loading state
+        document.querySelectorAll('.track-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const alumniId = this.getAttribute('data-alumni-id');
+                const btn = document.getElementById('track-btn-' + alumniId);
+                const btnText = btn.querySelector('.btn-text');
+                const spinner = btn.querySelector('.spinner-border');
+                
+                // Disable button and show loading
+                btn.disabled = true;
+                btnText.textContent = 'Mencari...';
+                spinner.classList.remove('d-none');
+                
+                // Add loading animation to button
+                btn.classList.add('tracking-active');
+            });
+        });
+
+        // Initialize tooltips
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    </script>
+    
+    <style>
+        .tracking-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .tracking-active::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+    </style>
 </body>
 </html>

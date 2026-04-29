@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review & Verifikasi - {{ alumni.nama_lulusan }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #1e3a8a;
+            --secondary-color: #3b82f6;
+        }
+        body {
+            background-color: #f8fafc;
+        }
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+        .review-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .result-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
+        .result-card:hover {
+            border-color: var(--secondary-color);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+        .score-indicator {
+            font-size: 2rem;
+            font-weight: 700;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .score-high { background: #d1fae5; color: #059669; }
+        .score-medium { background: #fef3c7; color: #d97706; }
+        .score-low { background: #fee2e2; color: #dc2626; }
+        .snippet-box {
+            background: #f1f5f9;
+            border-left: 4px solid var(--secondary-color);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            color: #475569;
+        }
+        .analysis-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            margin: 0.25rem;
+        }
+        .tag-match { background: #d1fae5; color: #059669; }
+        .tag-umm { background: #dbeafe; color: #2563eb; }
+        .tag-prodi { background: #fef3c7; color: #d97706; }
+        .json-viewer {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-mortarboard-fill me-2"></i>
+                Automated Alumni Profiler
+            </a>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-light text-dark">
+                    <i class="bi bi-eye me-1"></i>Mode Review
+                </span>
+                <a href="/" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i>Kembali
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card review-card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h3 class="fw-bold mb-2">{{ alumni.nama_lulusan }}</h3>
+                                <div class="text-muted">
+                                    <span class="me-3"><i class="bi bi-credit-card me-1"></i>{{ alumni.nim }}</span>
+                                    <span class="me-3"><i class="bi bi-building me-1"></i>{{ alumni.fakultas or '-' }}</span>
+                                    <span><i class="bi bi-book me-1"></i>{{ alumni.program_studi or '-' }}</span>
+                                </div>
+                                <div class="mt-2">
+                                    <span class="badge bg-secondary">Lulus: {{ alumni.tanggal_lulus or '-' }}</span>
+                                    {% if alumni.tahun_masuk %}
+                                    <span class="badge bg-secondary">Angkatan: {{ alumni.tahun_masuk }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                <div class="d-flex align-items-center justify-content-md-end gap-3">
+                                    <div>
+                                        <div class="small text-muted mb-1">Confidence Score</div>
+                                        {% if alumni.confidence_score >= 75 %}
+                                        <div class="score-indicator score-high">{{ alumni.confidence_score }}</div>
+                                        {% elif alumni.confidence_score >= 45 %}
+                                        <div class="score-indicator score-medium">{{ alumni.confidence_score }}</div>
+                                        {% else %}
+                                        <div class="score-indicator score-low">{{ alumni.confidence_score }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="small text-muted mb-1">Status</div>
+                                        {% if alumni.status_pelacakan == 'Teridentifikasi Kuat' %}
+                                        <span class="badge bg-success fs-6">Teridentifikasi Kuat</span>
+                                        {% elif alumni.status_pelacakan == 'Perlu Verifikasi' %}
+                                        <span class="badge bg-warning text-dark fs-6">Perlu Verifikasi</span>
+                                        {% elif alumni.status_pelacakan == 'Terverifikasi Manual' %}
+                                        <span class="badge bg-info fs-6">Terverifikasi Manual</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary fs-6">{{ alumni.status_pelacakan }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Column: Search Results Evidence -->
+            <div class="col-lg-8">
+                <div class="card review-card mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-search me-2 text-primary"></i>Jejak Bukti Pencarian
+                        </h5>
+                        <div class="mt-2">
+                            <small class="text-muted">Platform yang dicari:</small>
+                            <div class="mt-1">
+                                <span class="badge bg-primary me-1"><i class="bi bi-linkedin me-1"></i>LinkedIn</span>
+                                <span class="badge bg-danger me-1"><i class="bi bi-instagram me-1"></i>Instagram</span>
+                                <span class="badge bg-primary me-1"><i class="bi bi-facebook me-1"></i>Facebook</span>
+                                <span class="badge bg-dark me-1"><i class="bi bi-twitter-x me-1"></i>Twitter/X</span>
+                                <span class="badge bg-dark me-1"><i class="bi bi-tiktok me-1"></i>TikTok</span>
+                                <span class="badge bg-secondary me-1"><i class="bi bi-globe me-1"></i>About.me</span>
+                                <span class="badge bg-secondary"><i class="bi bi-github me-1"></i>GitHub</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if log and log.snippet_bukti %}
+                        <div class="mb-4">
+                            <h6 class="fw-semibold text-muted mb-2">Snippet Terbaik dari Pencarian:</h6>
+                            <div class="snippet-box">
+                                <i class="bi bi-quote-start text-primary me-2"></i>
+                                {{ log.snippet_bukti }}
+                            </div>
+                            {% if log.url_sumber %}
+                            <div class="mt-2">
+                                <a href="{{ log.url_sumber }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-link-45deg me-1"></i>Buka Sumber: {{ log.title_sumber or 'Link' }}
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        {% if all_results %}
+                        <h6 class="fw-semibold text-muted mb-3">Semua Hasil Pencarian (Top 10):</h6>
+                        {% for result in all_results %}
+                        <div class="result-card p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-semibold mb-1">{{ result.title or 'No Title' }}</h6>
+                                    <a href="{{ result.link }}" target="_blank" class="small text-primary text-break">
+                                        {{ result.link }}
+                                    </a>
+                                </div>
+                                <div class="ms-3">
+                                    {% if result.score >= 80 %}
+                                    <span class="badge bg-success">{{ result.score }}</span>
+                                    {% elif result.score >= 50 %}
+                                    <span class="badge bg-warning text-dark">{{ result.score }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ result.score }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p class="small text-muted mb-2">{{ result.snippet or 'No snippet available' }}</p>
+                            <div>
+                                {% if result.analysis.name_match %}
+                                <span class="analysis-tag tag-match">
+                                    <i class="bi bi-check-circle me-1"></i>Nama Match
+                                </span>
+                                {% endif %}
+                                {% if result.analysis.umm_mention %}
+                                <span class="analysis-tag tag-umm">
+                                    <i class="bi bi-building me-1"></i>UMM Mention
+                                </span>
+                                {% endif %}
+                                {% if result.analysis.prodi_keyword %}
+                                <span class="analysis-tag tag-prodi">
+                                    <i class="bi bi-book me-1"></i>Prodi Keyword
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Tidak ada hasil pencarian tersedia. Lakukan pelacakan terlebih dahulu.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Raw JSON Viewer (Collapsible) -->
+                {% if log and log.raw_json_response %}
+                <div class="card review-card">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-code-square me-2 text-secondary"></i>Raw API Response
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="json-viewer">
+                            <pre class="mb-0"><code>{{ log.raw_json_response[:2000] }}{% if log.raw_json_response|length > 2000 %}... (truncated){% endif %}</code></pre>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Column: Verification Panel -->
+            <div class="col-lg-4">
+                <div class="card review-card sticky-top" style="top: 20px;">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-shield-check me-2 text-success"></i>Panel Verifikasi
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="/verify/{{ alumni.id }}" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Action</label>
+                                <div class="d-grid gap-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="action" value="approve" id="actionApprove" 
+                                               {{ 'checked' if alumni.status_pelacakan == 'Perlu Verifikasi' or alumni.confidence_score >= 45 else '' }}>
+                                        <label class="form-check-label" for="actionApprove">
+                                            <span class="badge bg-success me-1"><i class="bi bi-check-lg"></i></span>
+                                            Setujui & Verifikasi
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="action" value="reject" id="actionReject">
+                                        <label class="form-check-label" for="actionReject">
+                                            <span class="badge bg-danger me-1"><i class="bi bi-x-lg"></i></span>
+                                            Tolak / Tidak Cocok
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Social Media Profiles -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">
+                                    <i class="bi bi-linkedin me-1"></i>LinkedIn
+                                </label>
+                                <input type="url" name="linkedin" class="form-control" 
+                                       value="{{ alumni.linkedin if alumni.linkedin != 'Belum diisi' else '' }}"
+                                       placeholder="https://linkedin.com/in/...">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-danger">
+                                    <i class="bi bi-instagram me-1"></i>Instagram
+                                </label>
+                                <input type="url" name="instagram" class="form-control" 
+                                       value="{{ alumni.instagram if alumni.instagram != 'Belum diisi' else '' }}"
+                                       placeholder="https://instagram.com/username">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">
+                                    <i class="bi bi-facebook me-1"></i>Facebook
+                                </label>
+                                <input type="url" name="facebook" class="form-control" 
+                                       value="{{ alumni.facebook if alumni.facebook != 'Belum diisi' else '' }}"
+                                       placeholder="https://facebook.com/username">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-dark">
+                                    <i class="bi bi-twitter-x me-1"></i>Twitter/X
+                                </label>
+                                <input type="url" name="twitter_x" class="form-control" 
+                                       value="{{ alumni.twitter_x if alumni.twitter_x != 'Belum diisi' else '' }}"
+                                       placeholder="https://x.com/username">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-dark">
+                                    <i class="bi bi-tiktok me-1"></i>TikTok
+                                </label>
+                                <input type="url" name="tiktok" class="form-control" 
+                                       value="{{ alumni.tiktok if alumni.tiktok != 'Belum diisi' else '' }}"
+                                       placeholder="https://tiktok.com/@username">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-secondary">
+                                    <i class="bi bi-globe me-1"></i>Website Personal
+                                </label>
+                                <input type="url" name="website_personal" class="form-control" 
+                                       value="{{ alumni.website_personal if alumni.website_personal != 'Belum diisi' else '' }}"
+                                       placeholder="https://...">
+                            </div>
+
+                            <hr class="my-4">
+                            
+                            <h6 class="fw-bold mb-3 text-secondary">Kontak & Pekerjaan</h6>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-envelope me-1"></i>Email
+                                </label>
+                                <input type="email" name="email" class="form-control" 
+                                       value="{{ alumni.email if alumni.email != 'Belum diisi' else '' }}"
+                                       placeholder="email@example.com">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-telephone me-1"></i>No. HP
+                                </label>
+                                <input type="text" name="no_hp" class="form-control" 
+                                       value="{{ alumni.no_hp if alumni.no_hp != 'Belum diisi' else '' }}"
+                                       placeholder="08123456789">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-building me-1"></i>Tempat Kerja
+                                </label>
+                                <input type="text" name="tempat_kerja" class="form-control" 
+                                       value="{{ alumni.tempat_kerja if alumni.tempat_kerja != 'Belum diisi' else '' }}"
+                                       placeholder="Nama perusahaan/institusi">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-geo-alt me-1"></i>Alamat Kerja
+                                </label>
+                                <textarea name="alamat_kerja" class="form-control" rows="2"
+                                          placeholder="Alamat lengkap tempat kerja">{{ alumni.alamat_kerja if alumni.alamat_kerja != 'Belum diisi' else '' }}</textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-briefcase me-1"></i>Posisi
+                                </label>
+                                <input type="text" name="posisi" class="form-control" 
+                                       value="{{ alumni.posisi if alumni.posisi != 'Belum diisi' else '' }}"
+                                       placeholder="Jabatan/posisi">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-tag me-1"></i>Kategori
+                                </label>
+                                <select name="kategori" class="form-select">
+                                    <option value="">Pilih Kategori...</option>
+                                    <option value="Manajemen" {{ 'selected' if alumni.kategori == 'Manajemen' else '' }}>Manajemen</option>
+                                    <option value="Teknik/Teknologi" {{ 'selected' if alumni.kategori == 'Teknik/Teknologi' else '' }}>Teknik/Teknologi</option>
+                                    <option value="Konsultan" {{ 'selected' if alumni.kategori == 'Konsultan' else '' }}>Konsultan</option>
+                                    <option value="Akademisi" {{ 'selected' if alumni.kategori == 'Akademisi' else '' }}>Akademisi</option>
+                                    <option value="Kesehatan" {{ 'selected' if alumni.kategori == 'Kesehatan' else '' }}>Kesehatan</option>
+                                    <option value="Hukum" {{ 'selected' if alumni.kategori == 'Hukum' else '' }}>Hukum</option>
+                                    <option value="Akuntansi/Keuangan" {{ 'selected' if alumni.kategori == 'Akuntansi/Keuangan' else '' }}>Akuntansi/Keuangan</option>
+                                    <option value="Industri/Swasta" {{ 'selected' if alumni.kategori == 'Industri/Swasta' else '' }}>Industri/Swasta</option>
+                                    <option value="Pemerintahan" {{ 'selected' if alumni.kategori == 'Pemerintahan' else '' }}>Pemerintahan</option>
+                                    <option value="Wirausaha" {{ 'selected' if alumni.kategori == 'Wirausaha' else '' }}>Wirausaha</option>
+                                    <option value="Lainnya" {{ 'selected' if alumni.kategori == 'Lainnya' else '' }}>Lainnya</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-building me-1"></i>Sosmed Kantor
+                                </label>
+                                <input type="text" name="sosmed_kantor" class="form-control" 
+                                       value="{{ alumni.sosmed_kantor if alumni.sosmed_kantor != 'Belum diisi' else '' }}"
+                                       placeholder="Instagram/Twitter perusahaan">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-sticky me-1"></i>Catatan Verifikasi
+                                </label>
+                                <textarea name="catatan" class="form-control" rows="3" 
+                                          placeholder="Tambahkan catatan tentang verifikasi ini..."></textarea>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-check-circle me-2"></i>Simpan Verifikasi
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <!-- Reset form (outside verification form) -->
+                        <form action="/reset/{{ alumni.id }}" method="POST" class="mt-2" onsubmit="return confirm('⚠️ Yakin ingin reset semua data tracking? Semua data sosmed, pekerjaan, dan kontak akan dihapus.');">
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-trash me-2"></i>Reset Data Tracking
+                            </button>
+                        </form>
+                        
+                        <a href="/" class="btn btn-outline-secondary w-100 mt-2">
+                            <i class="bi bi-x-circle me-2"></i>Kembali ke Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
