@@ -14,8 +14,14 @@ from models import db, Alumni, LogPelacakan
 from search_engine import SerperSearchEngine
 from scorer import AlumniScorer
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from .env file (for local development)
+# On Render/production, env vars are set in the dashboard
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+    print(f"[OK] Loaded .env from {env_path}")
+else:
+    print("[INFO] No .env file found, using system environment variables")
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'tracer_study_secret_key_2024')
@@ -45,13 +51,18 @@ def init_services():
     """Initialize search engine and scorer with API key"""
     global search_engine, scorer
     try:
+        # Debug: Print all environment variables (mask sensitive values)
         api_key = os.environ.get('SERPER_API_KEY')
+        print(f"[DEBUG] SERPER_API_KEY present: {bool(api_key)}")
+        print(f"[DEBUG] SERPER_API_KEY length: {len(api_key) if api_key else 0}")
+        
         if api_key:
             search_engine = SerperSearchEngine(api_key=api_key)
             scorer = AlumniScorer()
             print("[OK] Search engine and scorer initialized")
         else:
             print("[WARNING] SERPER_API_KEY not set. Search functionality disabled.")
+            print(f"[DEBUG] Available env vars: {[k for k in os.environ.keys() if not k.startswith('_')][:10]}")
     except Exception as e:
         print(f"[ERROR] Failed to initialize services: {e}")
 
@@ -434,6 +445,22 @@ def api_stats():
         'strong_matches': strong,
         'needs_verification': verify,
         'tracking_rate': round(tracked / total * 100, 2) if total > 0 else 0
+    })
+
+
+@app.route('/health')
+def health_check():
+    """Health check endpoint - also verifies environment variables"""
+    api_key_present = bool(os.environ.get('SERPER_API_KEY'))
+    secret_key_present = bool(os.environ.get('FLASK_SECRET_KEY'))
+    
+    return jsonify({
+        'status': 'ok',
+        'database': 'connected',
+        'serper_api_key': 'configured' if api_key_present else 'missing',
+        'flask_secret_key': 'configured' if secret_key_present else 'missing',
+        'search_engine_initialized': search_engine is not None,
+        'message': 'All systems operational' if api_key_present else 'SERPER_API_KEY not configured'
     })
 
 
